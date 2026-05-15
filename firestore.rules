@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTip(data) {
+      return data.keys().hasAll(['cropCategory', 'instruction', 'instructionKn', 'imageUrl', 'createdAt']) &&
+             data.keys().size() == 5 &&
+             data.cropCategory in ['Paddy', 'Areca nut', 'Coconut', 'Tomato'] &&
+             data.instruction is string && data.instruction.size() <= 1000 &&
+             data.instructionKn is string && data.instructionKn.size() <= 1000 &&
+             data.imageUrl is string && data.imageUrl.size() <= 2048 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidSuccessStory(data) {
+      return data.keys().hasAll(['farmerName', 'story', 'storyKn', 'imageUrl', 'location', 'createdAt']) &&
+             data.keys().size() == 6 &&
+             data.farmerName is string && data.farmerName.size() <= 256 &&
+             data.story is string && data.story.size() <= 1000 &&
+             data.storyKn is string && data.storyKn.size() <= 1000 &&
+             data.imageUrl is string && data.imageUrl.size() <= 2048 &&
+             data.location is string && data.location.size() <= 256 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidExpertAsk(data) {
+      return data.keys().hasAll(['userId', 'imageUrl', 'status', 'timestamp']) &&
+             (data.keys().size() == 4 || (data.keys().size() == 5 && data.keys().hasAll(['reply']))) &&
+             data.userId == request.auth.uid &&
+             data.imageUrl is string && data.imageUrl.size() <= 2048 &&
+             data.status in ['pending', 'responded'] &&
+             data.timestamp == request.time;
+    }
+
+    match /tips/{tipId} {
+      allow read: if true; // Tips are public
+      allow write: if false; // Only admin (manual) can write tips, for now public can't
+    }
+
+    match /successStories/{storyId} {
+      allow read: if true; // Success stories are public
+      allow write: if false;
+    }
+
+    match /expertAsks/{askId} {
+      allow create: if isSignedIn() && isValidExpertAsk(request.resource.data);
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if false; // For now simulation only
+      allow delete: if false;
+    }
+  }
+}

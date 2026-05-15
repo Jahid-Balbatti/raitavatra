@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "Tip": {
+      "title": "Daily Tip",
+      "description": "Short, actionable agricultural tip for farmers.",
+      "type": "object",
+      "properties": {
+        "cropCategory": {
+          "type": "string",
+          "enum": ["Paddy", "Areca nut", "Coconut", "Tomato"],
+          "description": "Category of the crop the tip is for."
+        },
+        "instruction": {
+          "type": "string",
+          "description": "Text in English (2 sentences)."
+        },
+        "instructionKn": {
+          "type": "string",
+          "description": "Text in Kannada (2 sentences)."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the tip image."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["cropCategory", "instruction", "instructionKn", "imageUrl", "createdAt"]
+    },
+    "SuccessStory": {
+      "title": "Success Story",
+      "description": "A card showing a local farmer who used the tip and got results.",
+      "type": "object",
+      "properties": {
+        "farmerName": {
+          "type": "string"
+        },
+        "story": {
+          "type": "string"
+        },
+        "storyKn": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "location": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["farmerName", "story", "storyKn", "imageUrl", "location", "createdAt"]
+    },
+    "ExpertAsk": {
+      "title": "Expert Ask",
+      "description": "Simulated request for expert advice on a diseased leaf.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "responded"]
+        },
+        "reply": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "imageUrl", "status", "timestamp"]
+    }
+  },
+  "firestore": {
+    "tips": {
+      "schema": "Tip",
+      "description": "Collection of daily agricultural tips."
+    },
+    "successStories": {
+      "schema": "SuccessStory",
+      "description": "Collection of farmer success stories."
+    },
+    "expertAsks": {
+      "schema": "ExpertAsk",
+      "description": "Collection of simulated expert assistance requests."
+    }
+  }
+}
