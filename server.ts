@@ -14,8 +14,7 @@ async function startServer()
   // API moves here
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
-    
-  });
+     });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
