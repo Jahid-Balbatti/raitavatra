@@ -4,8 +4,7 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "ESNext",
-    "lib": 
-    [
+    "lib": [
       "ES2022",
       "DOM",
       "DOM.Iterable"

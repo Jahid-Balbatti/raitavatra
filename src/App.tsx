@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
-import { db } from './lib/firebase';
+import { db, handleFirestoreError, OperationType } from './lib/firebase';
 import { seedDatabase } from './lib/seed';
 import { Tip, SuccessStory as SuccessStoryType, CropCategory } from './types';
 import { Header } from './components/Header';
@@ -19,7 +19,7 @@ import { SuccessStory } from './components/SuccessStory';
 import { ExpertAsk } from './components/ExpertAsk';
 import { CropFilter } from './components/CropFilter';
 import { VerificationChecklist } from './components/VerificationChecklist';
-import { LayoutGroup, motion } from 'motion/react';
+import { LayoutGroup, motion, AnimatePresence } from 'motion/react';
 import { Loader2, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -42,6 +42,7 @@ export default function App() {
     }, (error) => {
       console.error("Firestore Error (Tips):", error);
       setLoading(false);
+      handleFirestoreError(error, OperationType.LIST, 'tips');
     });
 
     // Fetch Success Stories
@@ -49,6 +50,9 @@ export default function App() {
     const unsubscribeStories = onSnapshot(storiesQuery, (snapshot) => {
       const storiesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SuccessStoryType));
       setStories(storiesData);
+    }, (error) => {
+      console.error("Firestore Error (Stories):", error);
+      handleFirestoreError(error, OperationType.LIST, 'successStories');
     });
 
     return () => {
@@ -57,9 +61,14 @@ export default function App() {
     };
   }, []);
 
+  // Deduplicate tips by raw instruction text to bypass duplicate database items from multiple initial seeds or syncs
+  const uniqueTips = tips.filter((tip, index, self) =>
+    self.findIndex(t => t.instruction === tip.instruction) === index
+  );
+
   const filteredTips = selectedCrop 
-    ? tips.filter(t => t.cropCategory === selectedCrop)
-    : tips;
+    ? uniqueTips.filter(t => t.cropCategory === selectedCrop)
+    : uniqueTips;
 
   const currentTip = filteredTips[tipIndex % filteredTips.length];
 
@@ -104,14 +113,27 @@ export default function App() {
           </div>
 
           <div className="relative">
-            {currentTip ? (
-              <TipCard tip={currentTip} onNext={handleNextTip} />
-            ) : (
-              <div className="aspect-[4/5] bg-bg-card rounded-lg border border-border flex flex-col items-center justify-center p-12 text-center">
-                <RefreshCw className="text-text-dim mb-6 opacity-20" size={64} strokeWidth={1} />
-                <p className="text-text-muted font-serif italic text-xl">End of Stream. Refreshing archives...</p>
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {currentTip ? (
+                <TipCard 
+                  key={currentTip.id} 
+                  tip={currentTip} 
+                  onNext={handleNextTip} 
+                  isNextDisabled={filteredTips.length <= 1}
+                />
+              ) : (
+                <motion.div 
+                  key="empty-stream"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="min-h-[440px] w-full max-w-sm mx-auto bg-bg-card rounded-lg border border-border flex flex-col items-center justify-center p-12 text-center"
+                >
+                  <RefreshCw className="text-text-dim mb-6 opacity-20" size={64} strokeWidth={1} />
+                  <p className="text-text-muted font-serif italic text-xl">End of Stream. Refreshing archives...</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </section>
 

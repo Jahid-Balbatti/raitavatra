@@ -1,3 +1,4 @@
+import React from 'react';
 import { SuccessStory as SuccessStoryType } from "../types";
 import { User, MapPin, Quote } from "lucide-react";
 
@@ -5,7 +6,7 @@ interface SuccessStoryProps {
   story: SuccessStoryType;
 }
 
-export function SuccessStory({ story }: SuccessStoryProps) {
+export const SuccessStory: React.FC<SuccessStoryProps> = ({ story }) => {
   return (
     <div className="bg-bg-card rounded-lg overflow-hidden border border-border mb-8 group">
       <div className="relative h-48 grayscale group-hover:grayscale-0 transition-all duration-700">

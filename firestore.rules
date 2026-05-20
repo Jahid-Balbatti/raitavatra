@@ -2,8 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Default deny
-    match /{document=**}
-{
+    match /{document=**} {
       allow read, write: if false;
     }
 
@@ -48,12 +47,14 @@ service cloud.firestore {
 
     match /tips/{tipId} {
       allow read: if true; // Tips are public
-      allow write: if false; // Only admin (manual) can write tips, for now public can't
+      allow create: if isValidTip(request.resource.data);
+      allow update, delete: if false;
     }
 
     match /successStories/{storyId} {
       allow read: if true; // Success stories are public
-      allow write: if false;
+      allow create: if isValidSuccessStory(request.resource.data);
+      allow update, delete: if false;
     }
 
     match /expertAsks/{askId} {

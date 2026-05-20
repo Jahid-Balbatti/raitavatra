@@ -1,5 +1,5 @@
 import { collection, addDoc, getDocs, serverTimestamp, query, limit } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, handleFirestoreError, OperationType } from "./firebase";
 import { CropCategory } from "../types";
 
 const INITIAL_TIPS = [
@@ -7,7 +7,7 @@ const INITIAL_TIPS = [
     cropCategory: CropCategory.PADDY,
     instruction: "Use azolla as bio-fertilizer to increase nitrogen content in the field. This can reduce urea dependency by 30%.",
     instructionKn: "ಗದ್ದೆಯಲ್ಲಿ ಸಾರಜನಕದ ಅಂಶವನ್ನು ಹೆಚ್ಚಿಸಲು ಅಜೋಲ್ಲಾವನ್ನು ಜೈವಿಕ ಗೊಬ್ಬರವಾಗಿ ಬಳಸಿ. ಇದು ಯೂರಿಯಾ ಅವಲಂಬನೆಯನ್ನು 30% ರಷ್ಟು ಕಡಿಮೆ ಮಾಡುತ್ತದೆ.",
-    imageUrl: "https://images.unsplash.com/photo-1590424744295-8854930be628?q=80&w=1000&auto=format&fit=crop",
+    imageUrl: "https://www.farmatma.in/wp-content/uploads/2018/01/paddy-cultivation.jpg",
   },
   {
     cropCategory: CropCategory.ARECA_NUT,
@@ -19,7 +19,7 @@ const INITIAL_TIPS = [
     cropCategory: CropCategory.COCONUT,
     instruction: "Apply green manure and compost in the basin to improve soil texture and moisture retention.",
     instructionKn: "ಮಣ್ಣಿನ ವಿನ್ಯಾಸ ಮತ್ತು ತೇವಾಂಶ ಉಳಿಸಿಕೊಳ್ಳುವಿಕೆಯನ್ನು ಸುಧಾರಿಸಲು ಪಾತಿಯಲ್ಲಿ ಹಸಿರೆಲೆ ಗೊಬ್ಬರ ಮತ್ತು ಪೆಟ್ಟಿಗೆ ಗೊಬ್ಬರವನ್ನು ಅನ್ವಯಿಸಿ.",
-    imageUrl: "https://images.unsplash.com/photo-1528605248644-14dd04cb220d?q=80&w=1000&auto=format&fit=crop",
+    imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMOGobi8rQR75NP2zyWKhI2mldBu34QxjKRkPOglRN6NTASlTez_yOlHOmPhhjj8AYKuufEPR5XKOTFNdXZnc96EozQb_4QiiEwRE8wA&s=10",
   },
   {
     cropCategory: CropCategory.TOMATO,
@@ -41,22 +41,44 @@ const INITIAL_STORIES = [
 
 export async function seedDatabase() {
   const tipsRef = collection(db, "tips");
-  const tipsSnap = await getDocs(query(tipsRef, limit(1)));
+  let tipsSnap;
+  try {
+    tipsSnap = await getDocs(query(tipsRef, limit(100)));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, "tips");
+    return;
+  }
   
   if (tipsSnap.empty) {
     console.log("Seeding tips...");
     for (const tip of INITIAL_TIPS) {
-      await addDoc(tipsRef, { ...tip, createdAt: serverTimestamp() });
+      try {
+        await addDoc(tipsRef, { ...tip, createdAt: serverTimestamp() });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, "tips");
+      }
     }
+  } else {
+    console.log("Tips collection already seeded.");
   }
 
   const storiesRef = collection(db, "successStories");
-  const storiesSnap = await getDocs(query(storiesRef, limit(1)));
+  let storiesSnap;
+  try {
+    storiesSnap = await getDocs(query(storiesRef, limit(1)));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, "successStories");
+    return;
+  }
 
   if (storiesSnap.empty) {
     console.log("Seeding stories...");
     for (const story of INITIAL_STORIES) {
-      await addDoc(storiesRef, { ...story, createdAt: serverTimestamp() });
+      try {
+        await addDoc(storiesRef, { ...story, createdAt: serverTimestamp() });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, "successStories");
+      }
     }
   }
 }

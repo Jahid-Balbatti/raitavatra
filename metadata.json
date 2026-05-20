@@ -1,8 +1,8 @@
 {
   "name": "Raitha-Varta",
   "description": "A flash-card advisor for farmers providing short, actionable agricultural tips and expert advice.",
-  "requestFramePermissions": [
-    "camera"
-  ],
-  "majorCapabilities": []
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
